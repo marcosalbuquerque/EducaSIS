@@ -1,6 +1,6 @@
 # EducaSIS
 
-Sistema de gerenciamento para alunos e professores.
+Sistema de gerenciamento para alunos e professores para fins educacionais.
 
 ## Como rodar o projeto
 
