@@ -7,7 +7,7 @@ Sistema de gerenciamento para alunos e professores para fins educacionais.
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/educaSIS.git
+git clone https://github.com/marcosalbuquerque/educaSIS.git
 cd educaSIS
 ```
 
