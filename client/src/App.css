@@ -1,0 +1,13 @@
+* {
+  padding: 0;
+  margin:0;
+}
+
+.outline-hover {
+  transition: all 0.3s ease;
+}
+
+.outline-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px #0003;
+}
