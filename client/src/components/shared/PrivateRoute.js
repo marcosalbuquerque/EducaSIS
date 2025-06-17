@@ -10,3 +10,8 @@ export function PrivateRouteProfessor({ children }) {
   const token = localStorage.getItem('tokenProfessor');
   return token ? children : <Navigate to="/login/professor" />;
 }
+
+export function PrivateRouteAdmin({ children }) {
+  const token = localStorage.getItem('tokenAdmin');
+  return token ? children : <Navigate to="/login/admin" />;
+}

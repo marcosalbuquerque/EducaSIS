@@ -25,6 +25,12 @@ function Home() {
                             Professor
                         </Button>
                     </Link>
+
+                    <Link to="/login/admin" className="flex-fill">
+                        <Button variant="outline-danger" size="lg" block className="outline-hover w-100">
+                            Admin
+                        </Button>
+                    </Link>
                 </div>
             </Card>
         </Container>

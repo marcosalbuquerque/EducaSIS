@@ -74,11 +74,6 @@ function LoginProfessor() {
           </Button>
         </Form>
 
-        <div className="mt-3 text-center">
-          <span>Ainda não tem conta? </span>
-          <Link to="/registro/professor">Cadastre-se</Link>
-        </div>
-
         <Button 
           variant="outline-secondary" 
           onClick={handleBackHome} 
