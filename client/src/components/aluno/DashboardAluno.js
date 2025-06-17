@@ -8,13 +8,25 @@ import { useNavigate } from "react-router-dom";
 function DashboardAluno() {
   const [tasks, setTasks] = useState([]);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard', 'pendentes', 'feitas'
+  const [idAluno, setIdAluno] = useState(null);
+  const [entregas, setEntregas] = useState([]);
   const navigate = useNavigate();
 
   const nome = localStorage.getItem('nomeAluno') || 'Aluno';
 
   useEffect(() => {
     fetchTarefas();
+    const id = localStorage.getItem('idAluno');
+    if (id) setIdAluno(Number(id));
   }, []);
+
+  useEffect(() => {
+    if (idAluno) {
+      axios.get(`http://localhost:3001/api/alunos/${idAluno}/entregas`)
+        .then(res => setEntregas(res.data.map(e => e.id_tarefa)))
+        .catch(() => setEntregas([]));
+    }
+  }, [idAluno, tasks]);
 
   const fetchTarefas = async () => {
     try {
@@ -34,14 +46,33 @@ function DashboardAluno() {
     }
   };
 
+  const handleToggleEntrega = async (id, entregue) => {
+    if (!idAluno) {
+      alert('ID do aluno não encontrado.');
+      return;
+    }
+    try {
+      if (!entregue) {
+        // Entregar tarefa
+        await axios.post(`http://localhost:3001/api/tarefas/${id}/entregar`, { id_aluno: idAluno });
+      } else {
+        // Desmarcar entrega (remover da tabela entregas)
+        await axios.delete(`http://localhost:3001/api/tarefas/${id}/entregar`, { data: { id_aluno: idAluno } });
+      }
+      fetchTarefas();
+    } catch (error) {
+      console.error("Erro ao atualizar entrega", error);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('tokenAluno');
     localStorage.removeItem('nomeAluno');
     navigate('/login/aluno');
   };
 
-  const tarefasPendentes = tasks.filter(t => !t.concluida);
-  const tarefasConcluidas = tasks.filter(t => t.concluida);
+  const tarefasPendentes = tasks.filter(t => !entregas.includes(t.id));
+  const tarefasConcluidas = tasks.filter(t => entregas.includes(t.id));
 
   const dadosGrafico = [
     { name: 'Pendentes', qtd: tarefasPendentes.length },
@@ -121,7 +152,7 @@ function DashboardAluno() {
                   <Card.Title>{task.titulo}</Card.Title>
                   <Card.Text>{task.descricao}</Card.Text>
                   <Card.Text><small>De {task.dataInicio} até {task.dataFim}</small></Card.Text>
-                  <Button variant="success" onClick={() => handleToggleConcluida(task.id, task.concluida)}>Marcar como Concluída</Button>
+                  <Button variant="success" onClick={() => handleToggleEntrega(task.id, false)}>Marcar como Concluída</Button>
                 </Card.Body>
               </Card>
             ))}
@@ -138,7 +169,7 @@ function DashboardAluno() {
                   <Card.Title>{task.titulo} ✅</Card.Title>
                   <Card.Text>{task.descricao}</Card.Text>
                   <Card.Text><small>De {task.dataInicio} até {task.dataFim}</small></Card.Text>
-                  <Button variant="outline-danger" onClick={() => handleToggleConcluida(task.id, task.concluida)}>Desmarcar como Concluída</Button>
+                  <Button variant="outline-danger" onClick={() => handleToggleEntrega(task.id, true)}>Desmarcar como Concluída</Button>
                 </Card.Body>
               </Card>
             ))}

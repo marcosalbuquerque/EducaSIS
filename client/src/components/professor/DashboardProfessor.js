@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Button, Form, Card, Row, Col, Nav, Alert } from "react-bootstrap";
+import { Button, Form, Card, Row, Col, Nav, Alert, Modal } from "react-bootstrap"; // Adicionei Modal
 import { FaChalkboardTeacher, FaListUl, FaUserGraduate, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import ListaAlunos from "./ListaAlunos";
 import axios from "axios";
 
+// Este será o novo componente para ver o status, vamos criá-lo em seguida
+import StatusTarefa from './StatusTarefa'; 
+
 function formatarData(iso) {
+  if (!iso) return '';
   const [ano, mes, dia] = iso.split("T")[0].split("-");
   return `${dia}/${mes}/${ano}`;
 }
@@ -18,7 +22,10 @@ function DashboardProfessor() {
   const [dataFim, setDataFim] = useState('');
   const [editId, setEditId] = useState(null);
   const [activeView, setActiveView] = useState('postar');
-  const [showSuccess, setShowSuccess] = useState(false); // Estado para mensagem de sucesso
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // NOVO ESTADO: para controlar a tarefa que queremos ver o status
+  const [tarefaSelecionada, setTarefaSelecionada] = useState(null);
 
   const navigate = useNavigate();
 
@@ -53,7 +60,6 @@ function DashboardProfessor() {
       setDataFim('');
       fetchTarefas();
 
-      // Mostrar mensagem de sucesso
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
@@ -83,6 +89,11 @@ function DashboardProfessor() {
     localStorage.removeItem('tokenProfessor');
     localStorage.removeItem('nomeProfessor');
     navigate('/login/professor');
+  };
+
+  // NOVA FUNÇÃO: para abrir o modal de status
+  const handleVerStatus = (task) => {
+    setTarefaSelecionada(task);
   };
 
   return (
@@ -204,26 +215,64 @@ function DashboardProfessor() {
 
         {activeView === 'tarefas' && (
           <div className="mt-4">
-            {tasks?.map((task) => (
-              <Card key={task.id} className="mb-3 p-3 shadow">
-                <h5>
-                  {task.titulo}
-                  {task.concluida ? <span style={{ color: 'green', marginLeft: 10 }}>✅ Concluída</span> : <span style={{ color: 'orange', marginLeft: 10 }}>⏳ Pendente</span>}
-                </h5>
-                <p>{task.descricao}</p>
-                <p>De {formatarData(task.dataInicio)} até {formatarData(task.dataFim)}</p>
-                <Button variant="outline-warning" onClick={() => handleEdit(task)}>
-                  Editar
-                </Button>{' '}
-                <Button variant="outline-danger" onClick={() => handleDelete(task.id)}>
-                  Excluir
-                </Button>
-              </Card>
-            ))}
+            {tasks?.length === 0 && (
+              <div className="text-center text-muted" style={{ fontSize: '1.1rem', marginTop: 40 }}>
+                Nenhuma tarefa cadastrada.
+              </div>
+            )}
+            <div className="row">
+              {tasks?.map((task) => (
+                <div key={task.id} className="col-md-6 col-lg-4 mb-4">
+                  <Card className="shadow-sm h-100" style={{ borderRadius: 16, border: '1px solid #e3e6f0' }}>
+                    <Card.Body className="d-flex flex-column">
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+                        <Card.Title style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0d6efd', flex: 1 }}>
+                          {task.titulo}
+                        </Card.Title>
+                        <span className="badge bg-light text-secondary" style={{ fontSize: 12, border: '1px solid #dee2e6' }}>
+                          #{task.id}
+                        </span>
+                      </div>
+                      <Card.Text style={{ color: '#444', minHeight: 60 }}>
+                        {task.descricao}
+                      </Card.Text>
+                      <div className="mb-2" style={{ fontSize: 13, color: '#888' }}>
+                        <span className="me-2">
+                          <strong>Início:</strong> {formatarData(task.dataInicio)}
+                        </span>
+                        <span>
+                          <strong>Fim:</strong> {formatarData(task.dataFim)}
+                        </span>
+                      </div>
+                      <div className="mt-auto d-flex gap-2">
+                        <Button variant="outline-info" size="sm" onClick={() => handleVerStatus(task)}>
+                          Ver Status
+                        </Button>
+                        <Button variant="outline-warning" size="sm" onClick={() => handleEdit(task)}>
+                          Editar
+                        </Button>
+                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete(task.id)}>
+                          Excluir
+                        </Button>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {activeView === 'alunos' && <ListaAlunos />}
+
+        {/* NOVO MODAL PARA EXIBIR O STATUS DA TAREFA */}
+        {tarefaSelecionada && (
+          <StatusTarefa 
+            show={!!tarefaSelecionada} 
+            handleClose={() => setTarefaSelecionada(null)}
+            tarefa={tarefaSelecionada}
+          />
+        )}
       </div>
     </div>
   );

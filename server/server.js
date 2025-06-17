@@ -192,6 +192,88 @@ app.patch("/tarefas/:id", (req, res) => {
     });
 });
 
+// Rotas para Tarefas
+// Rota para o professor criar uma nova tarefa
+app.post('/api/tarefas', (req, res) => {
+    const { titulo, descricao } = req.body;
+    // Lógica para salvar a nova tarefa no banco de dados
+    const query = 'INSERT INTO tarefas (titulo, descricao) VALUES (?, ?)';
+    db.query(query, [titulo, descricao], (err, result) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        res.status(201).send({ id: result.insertId, titulo, descricao });
+    });
+});
+
+// Rota para listar todas as tarefas para o professor
+app.get('/api/tarefas', (req, res) => {
+    const query = 'SELECT * FROM tarefas';
+    db.query(query, (err, results) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        res.json(results);
+    });
+});
+
+// Rota para ver o status de uma tarefa
+app.get('/api/tarefas/:id/status', (req, res) => {
+    const { id } = req.params;
+    const query = `
+        SELECT a.id, a.nome, CASE WHEN e.id_tarefa IS NOT NULL THEN 'Concluído' ELSE 'Pendente' END AS status
+        FROM alunos a
+        LEFT JOIN entregas e ON a.id = e.id_aluno AND e.id_tarefa = ?
+    `;
+    db.query(query, [id], (err, results) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        res.json(results);
+    });
+});
+
+// Rota para o aluno entregar uma tarefa
+app.post('/api/tarefas/:id/entregar', (req, res) => {
+    const { id } = req.params;
+    const { id_aluno } = req.body;
+    const query = 'INSERT INTO entregas (id_tarefa, id_aluno) VALUES (?, ?)';
+    db.query(query, [id, id_aluno], (err, result) => {
+        if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(409).send('Tarefa já entregue.');
+            }
+            return res.status(500).send(err);
+        }
+        res.status(201).send('Tarefa entregue com sucesso!');
+    });
+});
+
+// Rota para o aluno remover a entrega de uma tarefa
+app.delete('/api/tarefas/:id/entregar', (req, res) => {
+    const { id } = req.params;
+    const { id_aluno } = req.body;
+    const query = 'DELETE FROM entregas WHERE id_tarefa = ? AND id_aluno = ?';
+    db.query(query, [id, id_aluno], (err, result) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        res.status(200).send('Entrega removida com sucesso!');
+    });
+});
+
+// Rota para listar entregas de um aluno
+app.get('/api/alunos/:id_aluno/entregas', (req, res) => {
+    const { id_aluno } = req.params;
+    const query = 'SELECT id_tarefa FROM entregas WHERE id_aluno = ?';
+    db.query(query, [id_aluno], (err, results) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        res.json(results);
+    });
+});
+
 app.listen(3001, () => {
     console.log("Servidor iniciado na porta 3001.");
 });
